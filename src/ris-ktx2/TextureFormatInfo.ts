@@ -177,9 +177,12 @@ export class TextureFormatInfo {
     }
 
     /**
-     * Uncompressed RGBA8 layout: 1×1 blocks, 4 bytes per pixel.
+     * Uncompressed 8-bit 4-channel layout: 1×1 blocks, 4 bytes per pixel.
      *
-     * @returns The RGBA8 {@link TextureFormatInfo}.
+     * Channel order does not change the size. `B8G8R8A8_*` and
+     * `A8B8G8R8_*_PACK32` use this same layout.
+     *
+     * @returns The 4-byte {@link TextureFormatInfo}.
      */
     public static rgba32(): TextureFormatInfo {
         return new TextureFormatInfo(1, 1, 1, 4);
@@ -206,9 +209,19 @@ export class TextureFormatInfo {
     /**
      * Block layout for a Vulkan format this package knows how to size.
      *
-     * Supported formats are `R8G8B8A8_UNORM`, `R8G8B8A8_SRGB`,
-     * `D24_UNORM_S8_UINT`, `D32_SFLOAT`, `ASTC_4X4_UNORM_BLOCK`,
-     * `BC7_UNORM_BLOCK`, `BC3_UNORM_BLOCK`, and `ETC2_R8G8B8A8_UNORM_BLOCK`.
+     * sRGB, signed, integer, and scaled variants share the block size of the
+     * matching unsigned normalized format. Channel order does not change the
+     * byte size.
+     *
+     * - `R8G8B8A8_*`, `B8G8R8A8_*`, and `A8B8G8R8_*_PACK32` use {@link TextureFormatInfo.rgba32}.
+     * - `D24_UNORM_S8_UINT` uses {@link TextureFormatInfo.depth24Stencil8}.
+     * - `D32_SFLOAT` uses {@link TextureFormatInfo.depth32float}.
+     * - `BC3_UNORM_BLOCK` and `BC3_SRGB_BLOCK` use {@link TextureFormatInfo.bc3}.
+     * - `BC7_UNORM_BLOCK` and `BC7_SRGB_BLOCK` use {@link TextureFormatInfo.bc7}.
+     * - `ETC2_R8G8B8A8_UNORM_BLOCK` and `ETC2_R8G8B8A8_SRGB_BLOCK` use {@link TextureFormatInfo.etc2rgba}.
+     * - `ASTC_4X4_UNORM_BLOCK`, `ASTC_4X4_SRGB_BLOCK`, and `ASTC_4X4_SFLOAT_BLOCK`
+     *   use {@link TextureFormatInfo.astc4x4rgba}. `ASTC_4X4_SFLOAT_BLOCK_EXT`
+     *   is the same value as `ASTC_4X4_SFLOAT_BLOCK`.
      *
      * @param vkFormat - Vulkan format.
      * @returns The matching layout.
@@ -217,19 +230,43 @@ export class TextureFormatInfo {
     public static fromVkFormat(vkFormat: VkFormat): TextureFormatInfo {
         switch (vkFormat) {
             case VkFormat.R8G8B8A8_UNORM:
+            case VkFormat.R8G8B8A8_SNORM:
+            case VkFormat.R8G8B8A8_USCALED:
+            case VkFormat.R8G8B8A8_SSCALED:
+            case VkFormat.R8G8B8A8_UINT:
+            case VkFormat.R8G8B8A8_SINT:
             case VkFormat.R8G8B8A8_SRGB:
+            case VkFormat.B8G8R8A8_UNORM:
+            case VkFormat.B8G8R8A8_SNORM:
+            case VkFormat.B8G8R8A8_USCALED:
+            case VkFormat.B8G8R8A8_SSCALED:
+            case VkFormat.B8G8R8A8_UINT:
+            case VkFormat.B8G8R8A8_SINT:
+            case VkFormat.B8G8R8A8_SRGB:
+            case VkFormat.A8B8G8R8_UNORM_PACK32:
+            case VkFormat.A8B8G8R8_SNORM_PACK32:
+            case VkFormat.A8B8G8R8_USCALED_PACK32:
+            case VkFormat.A8B8G8R8_SSCALED_PACK32:
+            case VkFormat.A8B8G8R8_UINT_PACK32:
+            case VkFormat.A8B8G8R8_SINT_PACK32:
+            case VkFormat.A8B8G8R8_SRGB_PACK32:
                 return this.rgba32();
             case VkFormat.D24_UNORM_S8_UINT:
                 return this.depth24Stencil8();
             case VkFormat.D32_SFLOAT:
                 return this.depth32float();
             case VkFormat.ASTC_4X4_UNORM_BLOCK:
+            case VkFormat.ASTC_4X4_SRGB_BLOCK:
+            case VkFormat.ASTC_4X4_SFLOAT_BLOCK:
                 return this.astc4x4rgba();
             case VkFormat.BC7_UNORM_BLOCK:
+            case VkFormat.BC7_SRGB_BLOCK:
                 return this.bc7();
             case VkFormat.BC3_UNORM_BLOCK:
+            case VkFormat.BC3_SRGB_BLOCK:
                 return this.bc3();
             case VkFormat.ETC2_R8G8B8A8_UNORM_BLOCK:
+            case VkFormat.ETC2_R8G8B8A8_SRGB_BLOCK:
                 return this.etc2rgba();
             default:
                 throw new Error(`TextureFormatInfo.fromVkFormat has no layout for VkFormat ${vkFormat}.`);

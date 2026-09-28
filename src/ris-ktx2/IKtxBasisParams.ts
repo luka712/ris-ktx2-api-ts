@@ -1,4 +1,4 @@
-import {KtxUastcFlags} from "./KtxUastcFlags";
+import {KtxUastcFlags} from "./KtxUastcFlags.ts";
 
 /**
  * Parameters for Basis Universal supercompression.
@@ -13,9 +13,11 @@ export interface IKtxBasisParams {
     /**
      * ETC1S encoding speed versus quality.
      *
-     * Range is `[0, 5]`. Higher values are slower and produce higher quality.
-     * There is no implicit default: `0` is a valid level, so callers set this
-     * themselves. The usual KTX default level is `2`.
+     * libktx 4.3 documents the range as `[0, 5]`. libktx 4.4 documents
+     * `[0, 6]`, with the higher levels intended for video. Higher values are
+     * slower and produce higher quality. There is no implicit default: `0`
+     * is a valid level, so callers set this themselves. The usual KTX default
+     * level is `2`.
      */
     compressionLevel?: number;
 
@@ -26,8 +28,10 @@ export interface IKtxBasisParams {
      * less quality. Higher values compress less, run slower, and keep more
      * quality. This selects the endpoint and selector counts and the RDO
      * thresholds. Setting those lower-level parameters yourself overrides the
-     * values chosen from this level. When neither this nor both endpoint and
-     * selector counts are set, libktx uses `128`.
+     * values chosen from this level. libktx uses the quality level to choose
+     * the RDO thresholds only when the level is above `128`; otherwise those
+     * thresholds stay at their own defaults. When neither this nor both
+     * endpoint and selector counts are set, libktx uses `128`.
      */
     qualityLevel?: number;
 
@@ -39,8 +43,9 @@ export interface IKtxBasisParams {
     /**
      * UASTC encoding options.
      *
-     * A combination of {@link KtxUastcFlags}. The level bits are mutually
-     * exclusive; the hint bits can be combined with a level.
+     * A combination of {@link KtxUastcFlags}. Level values in bits 0–3 are
+     * mutually exclusive. Hints at bit 4 and above can be combined with a
+     * level. {@link KtxUastcFlags.FAVOR_UASTC_ERROR} is inside the level mask.
      */
     uastcFlags?: KtxUastcFlags;
 

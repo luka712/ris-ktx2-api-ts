@@ -1,9 +1,12 @@
 /**
  * UASTC encoding configuration flags.
  *
- * Packed bitfield matching the KTX / Basis Universal API:
- * bits 0–3 select a compression level (mutually exclusive), and
- * bits 4 and above are optional encoding hints that can be combined.
+ * Packed bitfield matching libktx `ktx_pack_uastc_flag_bits_e`.
+ * Bits 0–3 hold the compression level ({@link KtxUastcFlags.LEVEL_MASK}).
+ * {@link KtxUastcFlags.FAVOR_UASTC_ERROR} is `8`, so it sits inside that mask:
+ * combining it with a level changes the value `LEVEL_MASK` extracts.
+ * Hints at bit 4 and above (`16`, `64`, `128`, `256`) combine with a level
+ * with bitwise OR and leave bits 0–3 unchanged.
  */
 export enum KtxUastcFlags {
     /**

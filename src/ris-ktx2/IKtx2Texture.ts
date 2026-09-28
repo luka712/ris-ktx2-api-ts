@@ -1,7 +1,7 @@
-import {type IKtxBasisParams} from "./IKtxBasisParams";
-import {KtxTranscodeFlags} from "./KtxTranscodeFlags";
-import {KtxTranscodeFormat} from "./KtxTranscodeFormat";
-import {VkFormat} from "./VkFormat";
+import {type IKtxBasisParams} from "./IKtxBasisParams.ts";
+import {KtxTranscodeFlags} from "./KtxTranscodeFlags.ts";
+import {KtxTranscodeFormat} from "./KtxTranscodeFormat.ts";
+import {VkFormat} from "./VkFormat.ts";
 import type {TextureFormatInfo} from "./TextureFormatInfo.ts";
 import type {KtxErrorCode} from "./KtxErrorCode.ts";
 
@@ -83,13 +83,22 @@ export interface IKtx2Texture {
     compressBasis(quality: number): KtxErrorCode;
 
     /**
-     * Encodes uncompressed images to ASTC and replaces the original data.
+     * Encodes uncompressed 2D images to ASTC and replaces the original data.
      *
-     * The texture's fields, including the DFD, are updated. The result can be
-     * uploaded to a GPU without a further transcode.
+     * On success the texture fields, including the DFD, describe the ASTC
+     * encoding. The result can be uploaded to a GPU without a further transcode.
      *
-     * @param quality - Compression quality from 0 to 100.
-     * Higher is slower and higher quality. Lower is faster and lower quality.
+     * libktx `ktxTexture2_CompressAstc` returns
+     * {@link KtxErrorCode.INVALID_OPERATION} when the images are already
+     * supercompressed, already block-compressed, use a packed format such as
+     * RGB565, have a component size other than 8 bits, or are 1D.
+     * It returns {@link KtxErrorCode.OUT_OF_MEMORY} when encoding cannot
+     * allocate its working buffers.
+     *
+     * @param quality - Compression quality. `0` through `100` is the normal
+     * range: higher is slower and higher quality, lower is faster and lower
+     * quality. The libktx parameter is an unsigned integer, and a negative
+     * value is treated as greater than `100`.
      * @returns The error code.
      */
     compressAstc(quality: number): KtxErrorCode;
@@ -106,6 +115,10 @@ export interface IKtx2Texture {
 
     /**
      * Returns the block layout for a transcode target or Vulkan format.
+     *
+     * {@link KtxTranscodeFormat} and {@link VkFormat} overlap numerically
+     * (for example both use `13`). Implementations must tell them apart by
+     * which enumeration the caller passed, not by the number alone.
      *
      * @param format - Transcode target or Vulkan format.
      * @returns Block width, height, depth, and byte size for `format`.

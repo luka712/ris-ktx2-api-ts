@@ -18,7 +18,7 @@ https://github.com/KhronosGroup/KTX-Software
 
 Upstream license overview (v4.3.2): https://github.com/KhronosGroup/KTX-Software/blob/v4.3.2/LICENSE.md
 
-KTX-Software bundles other projects, including basis_universal. Those sources are not redistributed here. The sibling `ris-ktx2` package is what ships the libktx WebAssembly build; that build is outside this package.
+KTX-Software bundles other projects, including basis_universal. Those sources are not redistributed here. The `ris-ktx2` package ships the libktx WebAssembly build. That build is not part of this package.
 
 ## Basis Universal
 
@@ -44,4 +44,4 @@ Vulkan-Headers are dual-licensed Apache-2.0 OR MIT. This package is distributed 
 
 ## Development dependencies
 
-`vite` (MIT), `vite-plugin-dts` (MIT), `@microsoft/api-extractor` (MIT), `vitest` (MIT), and `@typescript/typescript6` (Apache-2.0) are used to build and test this package. They are not bundled into `dist/`. Their licenses are recorded in `package-lock.json`.
+`vite` (MIT), `vite-plugin-dts` (MIT), `@microsoft/api-extractor` (MIT), `vitest` (MIT), and `@typescript/typescript6` (Apache-2.0) are used to build and test this package. `vite-plugin-dts` uses API Extractor to bundle `dist/index.d.ts`. These tools are not bundled into `dist/`. Their licenses are recorded in `package-lock.json`.
