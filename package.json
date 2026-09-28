@@ -5,22 +5,26 @@
   "type": "module",
   "author": "Luka Erkapic <erkapic.luka.dev@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/luka712/TypeScript-RisGameFramework/tree/main/ris-ktx2-api#readme",
+  "homepage": "https://github.com/luka712/ris-ktx2-api-ts#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luka712/TypeScript-RisGameFramework.git",
-    "directory": "ris-ktx2-api"
+    "url": "git+https://github.com/luka712/ris-ktx2-api-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/luka712/TypeScript-RisGameFramework/issues"
+    "url": "https://github.com/luka712/ris-ktx2-api-ts/issues"
   },
   "keywords": [
-    "types",
+    "ktx",
+    "ktx2",
+    "texture",
+    "vulkan",
+    "basis-universal",
     "typescript",
-    "generated",
-    "ktx2"
+    "types"
   ],
+  "sideEffects": false,
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {

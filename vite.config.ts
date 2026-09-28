@@ -9,6 +9,8 @@ export default defineConfig({
             fileName: () => 'index.js',
         },
         emptyOutDir: true,
+        minify: false,
+        sourcemap: true,
     },
     plugins: [
         dts({

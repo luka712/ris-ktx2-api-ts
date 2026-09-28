@@ -7,8 +7,8 @@
  */
 export enum KtxCreateStorage {
     /** Do not allocate image storage. */
-    NO_STORAGE,
+    NO_STORAGE = 0,
 
     /** Allocate image storage for the texture. */
-    ALLOC_STORAGE,
+    ALLOC_STORAGE = 1,
 }

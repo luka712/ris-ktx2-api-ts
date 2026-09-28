@@ -10,8 +10,10 @@ export enum KtxTranscodeFlags {
 
     /**
      * For PVRTC1, decode a non-power-of-two ETC1S level to the next larger
-     * power of two. libktx documents this option as not implemented yet.
-     * Ignored when the level dimensions are already powers of two.
+     * power of two.
+     *
+     * libktx still documents this option as not implemented. It is ignored
+     * when the slice dimensions are already powers of two.
      */
     PVRTC_DECODE_TO_NEXT_POW2 = 2,
 
