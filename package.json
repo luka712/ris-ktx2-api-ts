@@ -1,0 +1,54 @@
+{
+  "name": "ris-ktx2-api",
+  "version": "0.1.0",
+  "description": "TypeScript interfaces, enumerations, and texture-format helpers for the ris-ktx2 package.",
+  "type": "module",
+  "author": "Luka Erkapic <erkapic.luka.dev@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/luka712/TypeScript-RisGameFramework/tree/main/ris-ktx2-api#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luka712/TypeScript-RisGameFramework.git",
+    "directory": "ris-ktx2-api"
+  },
+  "bugs": {
+    "url": "https://github.com/luka712/TypeScript-RisGameFramework/issues"
+  },
+  "keywords": [
+    "types",
+    "typescript",
+    "generated",
+    "ktx2"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "LICENSES",
+    "THIRD_PARTY_NOTICES.md",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc && vite build",
+    "clean": "rm -rf dist",
+    "test": "tsc -p tsconfig.test.json --noEmit && vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.57.0",
+    "@typescript/typescript6": "^6.0.2",
+    "vite": "^8.1.5",
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "^1.6.0"
+  }
+}
