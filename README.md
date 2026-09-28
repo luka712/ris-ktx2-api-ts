@@ -96,6 +96,19 @@ From the package root:
 
 `prepublishOnly` runs the build. Published files are `dist/`, `src/`, `LICENSE`, `LICENSES/`, `THIRD_PARTY_NOTICES.md`, `README.md`, and `CHANGELOG.md`. `idl-symbols.meta.json` is local generator metadata and is not published.
 
+## Releasing
+
+`package.json` `version` is the release version (`0.1.0`). It has no prerelease suffix. Publishing does not commit a version bump.
+
+| Branch | Result |
+| --- | --- |
+| `development` | Each push installs, builds, and tests, then publishes `<version>-dev.<run number>` to npm on the `next` dist-tag. A re-run of that workflow uses `<version>-dev.<run number>.<attempt>`. |
+| `main` | Each push installs, builds, and tests. If `<version>` is not already on npm, it is published on the `latest` dist-tag. The workflow then creates git tag `v<version>` and a GitHub release. |
+
+`npm install ris-ktx2-api@next` installs the `development` prerelease. A plain `npm install ris-ktx2-api` installs `latest`.
+
+Bump `version` on `development` when the next release starts, and merge that commit to `main` to publish it. Setup for the `NPM_TOKEN` secret and provenance is in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [MIT](LICENSE). Copyright (c) 2026 Luka Erkapic.

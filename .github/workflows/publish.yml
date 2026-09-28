@@ -1,0 +1,117 @@
+# development: publish <package.json version>-dev.<run> on the npm "next" dist-tag.
+# main: publish <package.json version> on "latest" when that version is not already
+# on npm, then create git tag v<version> and a GitHub release.
+# Neither job commits the version change back to the repository.
+
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+      - development
+
+jobs:
+  next:
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish prerelease to next
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package.json').version")
+          case "$VERSION" in
+            *-*)
+              echo "package.json version must be a release version with no prerelease suffix (got ${VERSION})."
+              exit 1
+              ;;
+          esac
+          if [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
+            PUBLISH_VERSION="${VERSION}-dev.${GITHUB_RUN_NUMBER}"
+          else
+            PUBLISH_VERSION="${VERSION}-dev.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+          fi
+          npm version "${PUBLISH_VERSION}" --no-git-tag-version
+          npm publish --provenance --tag next
+          echo "Published ${PUBLISH_VERSION} on dist-tag next. The version bump was not committed."
+
+  latest:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: publish-latest
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish release to latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          case "$VERSION" in
+            *-*)
+              echo "package.json version must be a release version with no prerelease suffix (got ${VERSION})."
+              exit 1
+              ;;
+          esac
+          PUBLISHED=$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)
+          if [ "$PUBLISHED" = "$VERSION" ]; then
+            echo "${NAME}@${VERSION} is already on npm. Skipping publish, tag, and GitHub release."
+            exit 0
+          fi
+          npm publish --provenance --tag latest
+          gh release create "v${VERSION}" \
+            --target "${GITHUB_SHA}" \
+            --title "v${VERSION}" \
+            --generate-notes
+          echo "Published ${NAME}@${VERSION} on dist-tag latest and created v${VERSION}."
