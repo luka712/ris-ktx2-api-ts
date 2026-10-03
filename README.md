@@ -145,9 +145,9 @@ Pass a `File` instead of a URL when the texture comes from an `<input type="file
 
 ## Planned features
 
-Release 0.2.0 adds compression to ASTC and the ability to create a WebGL2 texture.
+Planned for release 0.2.0: compression to ASTC, and the ability to create a WebGL2 texture.
 
-Longer term, compression to BC7 and WebGPU texture creation are planned.
+Planned longer term: compression to BC7, and WebGPU texture creation.
 
 ## Scripts
 
