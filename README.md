@@ -86,7 +86,7 @@ const image = texture.getImage(0, 0, 0);
 
 ## Create
 
-`Ktx2Factory` from `ris-ktx2` implements `IKtx2Factory`. Call `initializeAsync` before `create`.
+`Ktx2Factory` from `ris-ktx2` implements `IKtx2Factory`. Call `initializeAsync` before `create`. `compressBasis` Basis-encodes the image data. `writeToMemory` writes the KTX2 file.
 
 ```ts
 import { Ktx2Factory } from "ris-ktx2";
@@ -108,22 +108,28 @@ const createInfo: IKtxTextureCreateInfo = {
 
 const texture = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
 texture.setImageFromMemory(0, 0, 0, pixels);
+texture.compressBasis(128);
+const fileBytes = texture.writeToMemory();
 texture.delete();
 ```
 
-`pixels` is the base-level image data. `KtxCreateStorage.ALLOC_STORAGE` allocates space for it.
+`pixels` is the base-level image data. `128` is the Basis quality (`0` selects the default of 128).
 
 ## Load
 
-`loadAsync` reads a URL string or a browser `File`.
+`loadAsync` reads a URL string or a browser `File`. Basis Universal data must be transcoded before the image bytes are read.
 
 ```ts
 import { Ktx2Factory } from "ris-ktx2";
+import { KtxTranscodeFlags, KtxTranscodeFormat } from "ris-ktx2-api";
 
 const factory = new Ktx2Factory();
 await factory.initializeAsync();
 
 const texture = await factory.loadAsync("/textures/example.ktx2");
+if (texture.needsTranscoding) {
+  texture.transcodeBasis(KtxTranscodeFormat.BC7_RGBA, KtxTranscodeFlags.NONE);
+}
 const image = texture.getImage(0, 0, 0);
 texture.delete();
 ```
