@@ -84,137 +84,66 @@ const image = texture.getImage(0, 0, 0);
 
 `IKtx2Texture.compressAstc` encodes uncompressed 2D 8-bit images to ASTC. libktx returns `KtxErrorCode.INVALID_OPERATION` for data that is already supercompressed or block-compressed, for packed formats such as RGB565, for component sizes other than 8 bits, and for 1D images. Quality `0` through `100` is the normal range. The libktx parameter is unsigned, so a negative value is treated as greater than `100`.
 
-## Create and load with a mock factory
+## Create and load
 
-`IKtx2Factory` is an interface. This package does not implement it and does not call libktx. `ris-ktx2` supplies the real `Ktx2Factory`. The sample below is a mock you can use in tests: `create` allocates a texture, `loadAsync` returns a texture previously stored for a URL or file name, and `createFromBuffer` copies raw bytes into a new texture. It does not parse a KTX container.
+`ris-ktx2` implements `IKtx2Factory` with `Ktx2Factory`. This package does not load libktx. Construct the factory, then call `initializeAsync` before `create`, `loadAsync`, or `createFromBuffer`.
+
+`create` builds a texture from `IKtxTextureCreateInfo`. `TextureFormatInfo` sizes the level you pass to `setImageFromMemory`. `writeToMemory` returns the KTX2 file bytes, and `createFromBuffer` loads those bytes. `loadAsync` loads a URL string or a browser `File`.
 
 ```ts
+import { Ktx2Factory } from "ris-ktx2";
 import {
   KtxCreateStorage,
   KtxErrorCode,
+  KtxTranscodeFlags,
+  KtxTranscodeFormat,
   TextureFormatInfo,
   VkFormat,
-  type IKtx2Factory,
-  type IKtx2Texture,
   type IKtxTextureCreateInfo,
 } from "ris-ktx2-api";
 
-const stored = new Map<string, IKtx2Texture>();
-
-function mockTexture(
-  createInfo: IKtxTextureCreateInfo,
-  storage: KtxCreateStorage = KtxCreateStorage.ALLOC_STORAGE,
-  filePath?: string,
-): IKtx2Texture {
-  const width = createInfo.baseWidth;
-  const height = createInfo.baseHeight;
-  const byteLength = storage === KtxCreateStorage.ALLOC_STORAGE ? width * height * 4 : 0;
-  let image = new Uint8Array(byteLength);
-
-  const texture: IKtx2Texture = {
-    filePath,
-    width,
-    height,
-    get dataSize() {
-      return image.byteLength;
-    },
-    needsTranscoding: false,
-    numLevels: createInfo.numLevels ?? 1,
-    vkFormat: createInfo.vkFormat ?? VkFormat.R8G8B8A8_SRGB,
-    transcodeBasis() {
-      return KtxErrorCode.SUCCESS;
-    },
-    compressBasis() {
-      return KtxErrorCode.SUCCESS;
-    },
-    compressAstc() {
-      return KtxErrorCode.SUCCESS;
-    },
-    getImage() {
-      return image;
-    },
-    getTextureFormatInfo() {
-      return TextureFormatInfo.rgba32();
-    },
-    createCopy() {
-      return texture;
-    },
-    setImageFromMemory(_level, _layer, _faceSlice, imageData) {
-      image = new Uint8Array(imageData.byteLength);
-      image.set(new Uint8Array(imageData.buffer, imageData.byteOffset, imageData.byteLength));
-      return KtxErrorCode.SUCCESS;
-    },
-    writeToMemory() {
-      return image;
-    },
-    deflateZlib() {
-      return KtxErrorCode.SUCCESS;
-    },
-    deflateZstd() {
-      return KtxErrorCode.SUCCESS;
-    },
-    delete() {
-      image = new Uint8Array(0);
-    },
-  };
-
-  return texture;
-}
-
-const factory: IKtx2Factory = {
-  async initializeAsync() {},
-
-  async loadAsync(blob) {
-    const key = typeof blob === "string" ? blob : blob.name;
-    const texture = stored.get(key);
-    if (texture === undefined) {
-      throw new Error(`no texture stored for ${key}`);
-    }
-    return texture;
-  },
-
-  create(createInfo, storage = KtxCreateStorage.ALLOC_STORAGE) {
-    return mockTexture(createInfo, storage);
-  },
-
-  createFromBuffer(buffer) {
-    const texture = mockTexture(
-      {
-        baseWidth: buffer.byteLength,
-        baseHeight: 1,
-        vkFormat: VkFormat.R8G8B8A8_SRGB,
-        numLevels: 1,
-      },
-      KtxCreateStorage.NO_STORAGE,
-    );
-    texture.setImageFromMemory(0, 0, 0, buffer);
-    return texture;
-  },
-};
-
+const factory = new Ktx2Factory();
 await factory.initializeAsync();
 
 const createInfo: IKtxTextureCreateInfo = {
-  baseWidth: 2,
-  baseHeight: 2,
+  baseWidth: 256,
+  baseHeight: 256,
   vkFormat: VkFormat.R8G8B8A8_SRGB,
   numLevels: 1,
 };
 
-const texture = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
-const code = texture.setImageFromMemory(0, 0, 0, new Uint8Array([1, 2, 3, 4]));
+const layout = TextureFormatInfo.fromVkFormat(VkFormat.R8G8B8A8_SRGB);
+const levelBytes = layout.getDataSize(createInfo.baseWidth, createInfo.baseHeight);
+const pixels = new Uint8Array(levelBytes);
+
+const created = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
+const code = created.setImageFromMemory(0, 0, 0, pixels);
 if (code !== KtxErrorCode.SUCCESS) {
   throw new Error(`setImageFromMemory failed: ${KtxErrorCode[code]}`);
 }
 
-stored.set("memory.ktx2", texture);
-const loaded = await factory.loadAsync("memory.ktx2");
-const image = loaded.getImage(0, 0, 0);
-const fromBuffer = factory.createFromBuffer(texture.writeToMemory());
-texture.delete();
+const fileBytes = created.writeToMemory();
+const fromMemory = factory.createFromBuffer(fileBytes);
+const image = fromMemory.getImage(0, 0, 0);
+
+const loaded = await factory.loadAsync("/textures/example.ktx2");
+if (loaded.needsTranscoding) {
+  const transcodeCode = loaded.transcodeBasis(
+    KtxTranscodeFormat.BC7_RGBA,
+    KtxTranscodeFlags.NONE,
+  );
+  if (transcodeCode !== KtxErrorCode.SUCCESS) {
+    throw new Error(`transcode failed: ${KtxErrorCode[transcodeCode]}`);
+  }
+}
+const loadedImage = loaded.getImage(0, 0, 0);
+
+created.delete();
+fromMemory.delete();
+loaded.delete();
 ```
 
-`image` is the four bytes written with `setImageFromMemory`. `fromBuffer.getImage()` is those same bytes. `loaded` is the texture stored under `memory.ktx2`. Call `delete()` when the texture is no longer used.
+`levelBytes` is 262144 (256×256 RGBA8). `image` is the base level read back from the bytes `writeToMemory` produced. `loadedImage` is the base level of the file at that URL, after transcoding when the file is Basis Universal data. Pass a `File` to `loadAsync` instead of a URL when the texture comes from an `<input type="file">`.
 
 ## Scripts
 
