@@ -2,11 +2,17 @@
 
 `ris-ktx2-api` is TypeScript written for this repository and distributed under the MIT License (see `LICENSE`). Copyright (c) 2026 Luka Erkapic.
 
-This package does not vendor KTX-Software, Vulkan-Headers, basis_universal, or their binaries. `idl-symbols.meta.json` is local generator metadata for these sources. It is not a Khronos IDL file and it is not part of the published package.
+This package does not vendor KTX-Software, Vulkan-Headers, basis_universal, or their binaries.
 
 The enumerations and parameter fields below use the same names and numeric values as the public APIs they interoperate with. Some comments paraphrase that upstream documentation. Because of that, the Apache License 2.0 text is included at `LICENSES/Apache-2.0.txt`.
 
 ## Khronos KTX-Software
+
+![KTX icon](icons/ktx_favicon.ico)
+
+The KTX icon is taken from the KTX specification repository.[^ktx-icon]
+
+[^ktx-icon]: https://github.com/KhronosGroup/KTX-Specification. KTX and the KTX logo are trademarks of The Khronos Group Inc.
 
 Copyright 2010-2024 The Khronos Group Inc. and contributors.
 
