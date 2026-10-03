@@ -84,6 +84,58 @@ const image = texture.getImage(0, 0, 0);
 
 `IKtx2Texture.compressAstc` encodes uncompressed 2D 8-bit images to ASTC. libktx returns `KtxErrorCode.INVALID_OPERATION` for data that is already supercompressed or block-compressed, for packed formats such as RGB565, for component sizes other than 8 bits, and for 1D images. Quality `0` through `100` is the normal range. The libktx parameter is unsigned, so a negative value is treated as greater than `100`.
 
+## Create
+
+`Ktx2Factory` from `ris-ktx2` implements `IKtx2Factory`. Call `initializeAsync` before `create`. `compressBasis` Basis-encodes the image data. `writeToMemory` writes the KTX2 file.
+
+```ts
+import { Ktx2Factory } from "ris-ktx2";
+import {
+  KtxCreateStorage,
+  VkFormat,
+  type IKtxTextureCreateInfo,
+} from "ris-ktx2-api";
+
+const factory = new Ktx2Factory();
+await factory.initializeAsync();
+
+const createInfo: IKtxTextureCreateInfo = {
+  baseWidth: 256,
+  baseHeight: 256,
+  vkFormat: VkFormat.R8G8B8A8_SRGB,
+  numLevels: 1,
+};
+
+const texture = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
+texture.setImageFromMemory(0, 0, 0, pixels);
+texture.compressBasis(128);
+const fileBytes = texture.writeToMemory();
+texture.delete();
+```
+
+`pixels` is the base-level image data. `128` is the Basis quality (`0` selects the default of 128).
+
+## Load
+
+`loadAsync` reads a URL string or a browser `File`. Basis Universal data must be transcoded before the image bytes are read.
+
+```ts
+import { Ktx2Factory } from "ris-ktx2";
+import { KtxTranscodeFlags, KtxTranscodeFormat } from "ris-ktx2-api";
+
+const factory = new Ktx2Factory();
+await factory.initializeAsync();
+
+const texture = await factory.loadAsync("/textures/example.ktx2");
+if (texture.needsTranscoding) {
+  texture.transcodeBasis(KtxTranscodeFormat.BC7_RGBA, KtxTranscodeFlags.NONE);
+}
+const image = texture.getImage(0, 0, 0);
+texture.delete();
+```
+
+Pass a `File` instead of a URL when the texture comes from an `<input type="file">`.
+
 ## Scripts
 
 From the package root:
