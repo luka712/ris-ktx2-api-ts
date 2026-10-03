@@ -84,20 +84,14 @@ const image = texture.getImage(0, 0, 0);
 
 `IKtx2Texture.compressAstc` encodes uncompressed 2D 8-bit images to ASTC. libktx returns `KtxErrorCode.INVALID_OPERATION` for data that is already supercompressed or block-compressed, for packed formats such as RGB565, for component sizes other than 8 bits, and for 1D images. Quality `0` through `100` is the normal range. The libktx parameter is unsigned, so a negative value is treated as greater than `100`.
 
-## Create and load
+## Create
 
-`ris-ktx2` implements `IKtx2Factory` with `Ktx2Factory`. This package does not load libktx. Construct the factory, then call `initializeAsync` before `create`, `loadAsync`, or `createFromBuffer`.
-
-`create` builds a texture from `IKtxTextureCreateInfo`. `TextureFormatInfo` sizes the level you pass to `setImageFromMemory`. `writeToMemory` returns the KTX2 file bytes, and `createFromBuffer` loads those bytes. `loadAsync` loads a URL string or a browser `File`.
+`Ktx2Factory` from `ris-ktx2` implements `IKtx2Factory`. Call `initializeAsync` before `create`.
 
 ```ts
 import { Ktx2Factory } from "ris-ktx2";
 import {
   KtxCreateStorage,
-  KtxErrorCode,
-  KtxTranscodeFlags,
-  KtxTranscodeFormat,
-  TextureFormatInfo,
   VkFormat,
   type IKtxTextureCreateInfo,
 } from "ris-ktx2-api";
@@ -112,38 +106,29 @@ const createInfo: IKtxTextureCreateInfo = {
   numLevels: 1,
 };
 
-const layout = TextureFormatInfo.fromVkFormat(VkFormat.R8G8B8A8_SRGB);
-const levelBytes = layout.getDataSize(createInfo.baseWidth, createInfo.baseHeight);
-const pixels = new Uint8Array(levelBytes);
-
-const created = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
-const code = created.setImageFromMemory(0, 0, 0, pixels);
-if (code !== KtxErrorCode.SUCCESS) {
-  throw new Error(`setImageFromMemory failed: ${KtxErrorCode[code]}`);
-}
-
-const fileBytes = created.writeToMemory();
-const fromMemory = factory.createFromBuffer(fileBytes);
-const image = fromMemory.getImage(0, 0, 0);
-
-const loaded = await factory.loadAsync("/textures/example.ktx2");
-if (loaded.needsTranscoding) {
-  const transcodeCode = loaded.transcodeBasis(
-    KtxTranscodeFormat.BC7_RGBA,
-    KtxTranscodeFlags.NONE,
-  );
-  if (transcodeCode !== KtxErrorCode.SUCCESS) {
-    throw new Error(`transcode failed: ${KtxErrorCode[transcodeCode]}`);
-  }
-}
-const loadedImage = loaded.getImage(0, 0, 0);
-
-created.delete();
-fromMemory.delete();
-loaded.delete();
+const texture = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
+texture.setImageFromMemory(0, 0, 0, pixels);
+texture.delete();
 ```
 
-`levelBytes` is 262144 (256×256 RGBA8). `image` is the base level read back from the bytes `writeToMemory` produced. `loadedImage` is the base level of the file at that URL, after transcoding when the file is Basis Universal data. Pass a `File` to `loadAsync` instead of a URL when the texture comes from an `<input type="file">`.
+`pixels` is the base-level image data. `KtxCreateStorage.ALLOC_STORAGE` allocates space for it.
+
+## Load
+
+`loadAsync` reads a URL string or a browser `File`.
+
+```ts
+import { Ktx2Factory } from "ris-ktx2";
+
+const factory = new Ktx2Factory();
+await factory.initializeAsync();
+
+const texture = await factory.loadAsync("/textures/example.ktx2");
+const image = texture.getImage(0, 0, 0);
+texture.delete();
+```
+
+Pass a `File` instead of a URL when the texture comes from an `<input type="file">`.
 
 ## Scripts
 
