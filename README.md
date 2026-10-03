@@ -106,10 +106,16 @@ const createInfo: IKtxTextureCreateInfo = {
   numLevels: 1,
 };
 
+// We need to allocate storage to store pixels.
 const texture = factory.create(createInfo, KtxCreateStorage.ALLOC_STORAGE);
+
+// Typically pixels from your image.
+const pixels = new Float32Array(256 * 256 * 4);
 texture.setImageFromMemory(0, 0, 0, pixels);
 texture.compressBasis(128);
 const fileBytes = texture.writeToMemory();
+// Example 
+downloadKtx(fileBytes, "test.ktx2");
 texture.delete();
 ```
 
@@ -130,7 +136,8 @@ const texture = await factory.loadAsync("/textures/example.ktx2");
 if (texture.needsTranscoding) {
   texture.transcodeBasis(KtxTranscodeFormat.BC7_RGBA, KtxTranscodeFlags.NONE);
 }
-const image = texture.getImage(0, 0, 0);
+// Get transcoded pixels
+const pixels = texture.getImage(0, 0, 0);
 texture.delete();
 ```
 
